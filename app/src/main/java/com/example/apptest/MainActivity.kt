@@ -1,84 +1,63 @@
 package com.example.apptest
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
-import android.text.InputFilter
-import android.text.InputFilter.LengthFilter
 import android.text.TextWatcher
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import java.text.NumberFormat
-import java.util.*
-
 
 class MainActivity : AppCompatActivity() {
+
+    private val codeReceiver by lazy { CodeScannerBroadcastReceiver(this::onCodeRead) }
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        // Config values
-        val initialText = "$0.00"
-        val maxAmount = 200000 // 200.000
+        text.text = Build.BRAND
 
 
-        setupEditText(maxAmount, initialText)
-    }
+        codeReceiver.registerReceiver(this)
 
-    private fun setupEditText(maxAmount: Int, initialText: String) {
-        // Set a max  number of characters
-        val maxLength = NumberFormat.getCurrencyInstance(Locale.US).format(maxAmount).length
-        editText.filters = arrayOf<InputFilter>(LengthFilter(maxLength))
 
-        editText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                if (editText.text.isNullOrEmpty()) {
-                    editText.setText(initialText)
-                }
-            } else if (editText.text.toString() == initialText) {
-                editText.setText("")
-            }
-        }
-
-        editText.addTextChangedListener(object : TextWatcher {
-            private var lastAmount = ""
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        modalProductExpirationDate.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                // TODO review
-                val currentAmount =
-                    clearCurrencyToNumber(s.toString()).toDoubleOrNull()?.div(100) ?: 0.0
-                errorText.text = if (currentAmount > maxAmount) "Error" else ""
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                var clearString = s.toString()
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val value = s.toString()
-                if (value != lastAmount && editText.hasFocus()) {
-                    editText.removeTextChangedListener(this)
-
-                    val cleanString = clearCurrencyToNumber(value)
-                    val formatted = transformToCurrency(cleanString)
-                    lastAmount = formatted
-
-                    editText.setText(formatted)
-                    editText.setSelection(formatted.length)
-                    editText.addTextChangedListener(this)
+                modalProductExpirationDate.removeTextChangedListener(this)
+                var clearString = s.toString()
+                if (before == 1 && clearString.isNotBlank() && clearString.elementAt(clearString.length - 1) == '/') {
+                    clearString = clearString.substring(0, clearString.length - 1)
+                    modalProductExpirationDate.setText(clearString)
+                    modalProductExpirationDate.setSelection(clearString.length)
                 }
+                if (before == 0 && (clearString.length == 3 || clearString.length == 6)) {
+                    clearString = clearString.substring(0, clearString.length - 1) + "/" + clearString.last()
+                    modalProductExpirationDate.setText(clearString)
+                    modalProductExpirationDate.setSelection(clearString.length)
+                }
+                modalProductExpirationDate.addTextChangedListener(this)
             }
-
-
         })
+
+
     }
 
-    fun clearCurrencyToNumber(currencyValue: String?): String {
-        return currencyValue?.replace("[(a-z)|(A-Z)|($,.)]".toRegex(), "") ?: ""
+    override fun onDestroy() {
+        super.onDestroy()
+        codeReceiver.unregister(this)
     }
 
-    fun transformToCurrency(value: String): String {
-        val parsed = value.toDoubleOrNull() ?: 0.0
-        return NumberFormat.getCurrencyInstance(Locale.US).format(parsed / 100.0)
+    @SuppressLint("SetTextI18n")
+    private fun onCodeRead(code: String) {
+        text.text = "${Build.BRAND}\n$code"
     }
+
 }
