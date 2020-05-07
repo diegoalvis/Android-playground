@@ -11,28 +11,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ListActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="com.example.apptest.SCAN" />
-            </intent-filter>
         </activity>
-
-        <receiver
-            android:name=".CodeScannerBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true" />
+        <activity android:name=".Main2Activity" />
     </application>
 
 </manifest>
